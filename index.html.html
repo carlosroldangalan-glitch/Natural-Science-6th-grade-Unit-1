@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Science Quiz: How We Are Formed (Grade 6)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti for winning celebration -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- FontAwesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Fredoka', 'sans-serif'],
+            body: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              purple: '#6C5CE7',
+              pink: '#FD79A8',
+              teal: '#00CEC9',
+              yellow: '#FDCB6E',
+              green: '#00B894',
+              red: '#FF7675',
+              dark: '#2D3436',
+              bg: '#F0F3FF'
+            }
+          },
+          animation: {
+            'bounce-slow': 'bounce 2s infinite',
+            'pulse-subtle': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'float': 'float 3s ease-in-out infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-8px)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: #f0f4fd;
+      background-image: 
+        radial-gradient(#6c5ce7 0.75px, transparent 0.75px), 
+        radial-gradient(#00cec9 0.75px, #f0f4fd 0.75px);
+      background-size: 30px 30px;
+      background-position: 0 0, 15px 15px;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 20px 40px -15px rgba(108, 92, 231, 0.15);
+    }
+
+    .btn-press {
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn-press:hover:not(:disabled) {
+      transform: translateY(-2px);
+    }
+    .btn-press:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    .option-card {
+      transition: all 0.2s ease;
+      border: 2px solid #E2E8F0;
+    }
+    .option-card:hover:not(.disabled) {
+      border-color: #6C5CE7;
+      background-color: #F7F5FF;
+      transform: translateX(4px);
+    }
+
+    /* Option states */
+    .option-card.correct {
+      border-color: #00B894 !important;
+      background-color: #E6F9F5 !important;
+      color: #00604D !important;
+    }
+    .option-card.incorrect {
+      border-color: #FF7675 !important;
+      background-color: #FFEAEA !important;
+      color: #8C1D1D !important;
+    }
+    .option-card.disabled {
+      cursor: not-allowed;
+      opacity: 0.9;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F1F1;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #C7D2FE;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #A5B4FC;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between p-3 md:p-6">
+
+  <!-- TOP HEADER / NAVBAR -->
+  <header class="max-w-4xl mx-auto w-full flex items-center justify-between mb-4 glass-card px-5 py-3 rounded-2xl">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-purple to-brand-pink flex items-center justify-center text-white text-xl font-bold shadow-md">
+        <i class="fa-solid fa-dna animate-pulse"></i>
+      </div>
+      <div>
+        <h1 class="font-display font-bold text-lg md:text-xl text-slate-800 leading-tight">Science Explorer</h1>
+        <p class="text-xs font-semibold text-brand-purple uppercase tracking-wider">Unit 1: How We Are Formed</p>
+      </div>
+    </div>
+
+    <!-- Sound & Score Controls -->
+    <div class="flex items-center space-x-3">
+      <!-- Streak Counter Badge -->
+      <div id="streakBadge" class="hidden items-center space-x-1 bg-amber-100 text-amber-800 border border-amber-300 px-3 py-1 rounded-xl text-xs font-bold animate-bounce-slow">
+        <i class="fa-solid fa-fire text-amber-500 text-sm"></i>
+        <span id="streakText">Streak: 0</span>
+      </div>
+
+      <!-- Score Badge -->
+      <div class="flex items-center space-x-1 bg-indigo-50 border border-indigo-200 px-3 py-1.5 rounded-xl">
+        <i class="fa-solid fa-star text-amber-400 text-sm"></i>
+        <span id="scoreHeader" class="font-display font-bold text-brand-purple text-sm">0 pts</span>
+      </div>
+
+      <!-- Sound Toggle -->
+      <button id="soundToggle" onclick="toggleSound()" title="Toggle Sound SFX" class="w-10 h-10 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-brand-purple flex items-center justify-center transition-colors">
+        <i id="soundIcon" class="fa-solid fa-volume-high text-lg"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-3xl mx-auto w-full my-auto">
+
+    <!-- 1. START SCREEN -->
+    <div id="startScreen" class="glass-card rounded-3xl p-6 md:p-10 text-center relative overflow-hidden">
+      <div class="absolute -right-12 -top-12 w-40 h-40 bg-purple-200 rounded-full blur-2xl opacity-50"></div>
+      <div class="absolute -left-12 -bottom-12 w-40 h-40 bg-teal-200 rounded-full blur-2xl opacity-50"></div>
+
+      <div class="relative z-10">
+        <div class="inline-block p-4 rounded-3xl bg-indigo-50 border-2 border-indigo-100 mb-4 animate-float">
+          <span class="text-6xl">🔬</span>
+        </div>
+        
+        <h2 class="font-display font-bold text-3xl md:text-4xl text-slate-800 mb-3">
+          6th Grade Science Quiz Challenge!
+        </h2>
+        <p class="text-slate-600 text-base md:text-lg max-w-xl mx-auto mb-6">
+          Test your knowledge about <strong class="text-brand-purple">Cells, Vital Functions, Tissues, Organs, and Body Systems</strong> in English!
+        </p>
+
+        <!-- Quiz Details Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-xl mx-auto mb-8">
+          <div class="bg-indigo-50/80 p-3.5 rounded-2xl border border-indigo-100 text-center">
+            <i class="fa-solid fa-circle-question text-brand-purple text-xl mb-1"></i>
+            <p class="text-xs text-slate-500 font-semibold">Questions</p>
+            <p class="font-display font-bold text-slate-700">20 Questions</p>
+          </div>
+          <div class="bg-teal-50/80 p-3.5 rounded-2xl border border-teal-100 text-center">
+            <i class="fa-solid fa-graduation-cap text-brand-teal text-xl mb-1"></i>
+            <p class="text-xs text-slate-500 font-semibold">Level</p>
+            <p class="font-display font-bold text-slate-700">6th Primary</p>
+          </div>
+          <div class="bg-amber-50/80 p-3.5 rounded-2xl border border-amber-100 text-center">
+            <i class="fa-solid fa-lightbulb text-amber-500 text-xl mb-1"></i>
+            <p class="text-xs text-slate-500 font-semibold">Feedback</p>
+            <p class="font-display font-bold text-slate-700">Instant & Clear</p>
+          </div>
+          <div class="bg-rose-50/80 p-3.5 rounded-2xl border border-rose-100 text-center">
+            <i class="fa-solid fa-trophy text-brand-pink text-xl mb-1"></i>
+            <p class="text-xs text-slate-500 font-semibold">Goal</p>
+            <p class="font-display font-bold text-slate-700">Master Scientist</p>
+          </div>
+        </div>
+
+        <button onclick="startQuiz()" class="btn-press w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-brand-purple to-indigo-600 hover:from-indigo-600 hover:to-brand-purple text-white font-display font-bold text-xl rounded-2xl shadow-lg shadow-indigo-300 transition-all flex items-center justify-center space-x-3 mx-auto">
+          <span>Start Quiz Game</span>
+          <i class="fa-solid fa-rocket"></i>
+        </button>
+      </div>
+    </div>
+
+
+    <!-- 2. QUIZ SCREEN -->
+    <div id="quizScreen" class="hidden glass-card rounded-3xl p-5 md:p-8 relative">
+      
+      <!-- Progress Bar & Question Count -->
+      <div class="mb-6">
+        <div class="flex items-center justify-between mb-2">
+          <span id="questionNumText" class="font-display font-bold text-brand-purple text-sm md:text-base">
+            Question 1 of 20
+          </span>
+          <span id="scoreText" class="font-display font-bold text-emerald-600 text-sm md:text-base bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200">
+            Score: 0 / 200
+          </span>
+        </div>
+        <div class="w-full h-3 bg-slate-200/80 rounded-full overflow-hidden p-0.5">
+          <div id="progressBar" class="h-full bg-gradient-to-r from-brand-teal to-brand-purple rounded-full transition-all duration-500" style="width: 5%;"></div>
+        </div>
+      </div>
+
+      <!-- Question Box -->
+      <div class="mb-6 bg-indigo-50/60 p-5 md:p-6 rounded-2xl border border-indigo-100/80 relative">
+        <div class="inline-flex items-center space-x-2 bg-indigo-100 text-brand-purple px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide mb-3">
+          <i class="fa-solid fa-microscope"></i>
+          <span id="categoryBadge">Science Concept</span>
+        </div>
+        <h3 id="questionText" class="font-display font-bold text-xl md:text-2xl text-slate-800 leading-snug">
+          Question content loading...
+        </h3>
+      </div>
+
+      <!-- Options List -->
+      <div id="optionsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+        <!-- Injected dynamically by JavaScript -->
+      </div>
+
+      <!-- FEEDBACK BOX -->
+      <div id="feedbackCard" class="hidden rounded-2xl p-5 border-2 transition-all duration-300 mb-6">
+        <div class="flex items-start space-x-3">
+          <div id="feedbackIconContainer" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-xl font-bold text-white mt-0.5">
+            <i id="feedbackIcon" class="fa-solid fa-check"></i>
+          </div>
+          <div class="flex-1">
+            <h4 id="feedbackTitle" class="font-display font-bold text-lg mb-1">
+              Feedback Title
+            </h4>
+            <p id="feedbackExplanation" class="text-sm md:text-base leading-relaxed text-slate-700">
+              Detailed educational explanation will appear here...
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="flex justify-end pt-2 border-t border-slate-100">
+        <button id="nextBtn" onclick="nextQuestion()" disabled class="btn-press opacity-50 cursor-not-allowed px-8 py-3.5 bg-brand-purple hover:bg-indigo-700 text-white font-display font-bold text-base md:text-lg rounded-2xl shadow-md transition-all flex items-center space-x-2">
+          <span>Next Question</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+
+    <!-- 3. RESULTS SCREEN -->
+    <div id="resultsScreen" class="hidden glass-card rounded-3xl p-6 md:p-10 text-center relative overflow-hidden">
+      <div id="resultGlow" class="absolute inset-0 bg-gradient-to-b from-indigo-100/50 to-transparent pointer-events-none"></div>
+
+      <div class="relative z-10">
+        <!-- Rank Icon Badge -->
+        <div class="inline-block relative mb-4">
+          <div id="rankIconBg" class="w-24 h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-tr from-amber-300 to-amber-500 flex items-center justify-center text-white text-5xl shadow-xl mx-auto border-4 border-white">
+            <span id="rankEmoji">🌟</span>
+          </div>
+        </div>
+
+        <h2 id="rankTitle" class="font-display font-bold text-3xl md:text-4xl text-slate-800 mb-2">
+          Science Superstar!
+        </h2>
+        <p id="rankSubtitle" class="text-slate-600 text-base md:text-lg mb-6">
+          You have completed Unit 1: How We Are Formed.
+        </p>
+
+        <!-- Star Rating -->
+        <div id="starContainer" class="flex items-center justify-center space-x-2 text-3xl text-amber-400 mb-6">
+          <i class="fa-solid fa-star"></i>
+          <i class="fa-solid fa-star"></i>
+          <i class="fa-solid fa-star"></i>
+          <i class="fa-solid fa-star"></i>
+          <i class="fa-solid fa-star"></i>
+        </div>
+
+        <!-- Stats Breakdown Cards -->
+        <div class="grid grid-cols-3 gap-3 max-w-md mx-auto mb-8">
+          <div class="bg-white/90 p-3 md:p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <p class="text-xs text-slate-500 font-semibold mb-1">Percentage</p>
+            <p id="finalScoreText" class="font-display font-bold text-2xl text-brand-purple">100%</p>
+          </div>
+          <div class="bg-white/90 p-3 md:p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <p class="text-xs text-slate-500 font-semibold mb-1">Correct Answers</p>
+            <p id="finalCorrectText" class="font-display font-bold text-2xl text-emerald-600">20 / 20</p>
+          </div>
+          <div class="bg-white/90 p-3 md:p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <p class="text-xs text-slate-500 font-semibold mb-1">Total Points</p>
+            <p id="finalPointsText" class="font-display font-bold text-2xl text-amber-500">200 pts</p>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button onclick="toggleReviewMode()" class="btn-press w-full sm:w-auto px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-display font-bold text-base rounded-2xl transition-all flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-list-check"></i>
+            <span>Review All Answers</span>
+          </button>
+          <button onclick="resetQuiz()" class="btn-press w-full sm:w-auto px-8 py-3.5 bg-brand-purple hover:bg-indigo-700 text-white font-display font-bold text-base rounded-2xl shadow-lg shadow-indigo-200 transition-all flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-rotate-right"></i>
+            <span>Play Again</span>
+          </button>
+        </div>
+
+        <!-- Review Answers Panel -->
+        <div id="reviewContainer" class="hidden mt-8 text-left bg-slate-50/90 p-4 md:p-6 rounded-2xl border border-slate-200 max-h-96 overflow-y-auto">
+          <h4 class="font-display font-bold text-lg text-slate-800 mb-4 flex items-center justify-between">
+            <span>Questions Review Guide</span>
+            <span class="text-xs font-normal text-slate-500">Unit 1 Summary</span>
+          </h4>
+          <div id="reviewList" class="space-y-4">
+            <!-- Review items injected by JS -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="max-w-4xl mx-auto w-full text-center text-xs text-slate-500 mt-6 py-2">
+    <p>Science Primary 6 • Unit 1: How We Are Formed • Educational Interactive Quiz</p>
+  </footer>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // -------------------------------------------------------------
+    // QUESTION DATABASE (20 Questions - Unit 1 Science Grade 6)
+    // -------------------------------------------------------------
+    const questions = [
+      {
+        id: 1,
+        category: "Vital Functions",
+        question: "What are the three vital functions performed by all living organisms to stay alive?",
+        options: [
+          "Eating, Running, and Sleeping",
+          "Nutrition, Interaction, and Reproduction",
+          "Breathing, Thinking, and Growing",
+          "Moving, Talking, and Feeling"
+        ],
+        correct: 1,
+        explanation: "All living organisms perform three vital functions: <strong>Nutrition</strong> (obtaining nutrients & energy), <strong>Interaction</strong> (reacting to environment changes), and <strong>Reproduction</strong> (creating new life)."
+      },
+      {
+        id: 2,
+        category: "Cell Types",
+        question: "What type of cell HAS a nucleus that contains and protects its genetic material inside?",
+        options: [
+          "Prokaryotic cell",
+          "Bacterial cell",
+          "Eukaryotic cell",
+          "Unicellular tissue"
+        ],
+        correct: 2,
+        explanation: "<strong>Eukaryotic cells</strong> (found in animals, plants, and fungi) have a distinct nucleus that encloses their genetic material. Prokaryotic cells do not have a nucleus!"
+      },
+      {
+        id: 3,
+        category: "Cell Types",
+        question: "Which type of cell does NOT have a nucleus, so its genetic material floats inside the cytoplasm?",
+        options: [
+          "Eukaryotic cell",
+          "Prokaryotic cell",
+          "Plant cell",
+          "Human cell"
+        ],
+        correct: 1,
+        explanation: "<strong>Prokaryotic cells</strong> (like bacteria) do NOT have a nucleus. Their genetic material floats freely inside the cytoplasm."
+      },
+      {
+        id: 4,
+        category: "Cell Organization",
+        question: "Bacteria and yeast are made of only ONE single cell. They are classified as...",
+        options: [
+          "Multicellular organisms",
+          "Unicellular organisms",
+          "Heterotrophic systems",
+          "Eukaryotic organs"
+        ],
+        correct: 1,
+        explanation: "The prefix <em>'Uni-'</em> means one! <strong>Unicellular organisms</strong> consist of a single cell that performs all vital functions."
+      },
+      {
+        id: 5,
+        category: "Parts of a Cell",
+        question: "Which cell component acts as a thin protective wall that controls what enters and leaves the cell?",
+        options: [
+          "Nucleus",
+          "Cytoplasm",
+          "Cell membrane",
+          "Organelle"
+        ],
+        correct: 2,
+        explanation: "The <strong>cell membrane</strong> surrounds and protects the cell, controlling which substances can enter or leave."
+      },
+      {
+        id: 6,
+        category: "Parts of a Cell",
+        question: "What is the fluid substance that fills the inside of a cell and contains organelles?",
+        options: [
+          "Cell wall",
+          "Cytoplasm",
+          "Genetic material",
+          "Membrane"
+        ],
+        correct: 1,
+        explanation: "<strong>Cytoplasm</strong> is the fluid inside the cell that surrounds the organelles and helps keep the cell's shape."
+      },
+      {
+        id: 7,
+        category: "Types of Tissues",
+        question: "Which type of tissue covers body surfaces, lines internal organs, and forms glands?",
+        options: [
+          "Muscular tissue",
+          "Connective tissue",
+          "Epithelial tissue",
+          "Nervous tissue"
+        ],
+        correct: 2,
+        explanation: "<strong>Epithelial tissue</strong> covers body surfaces (like skin) and lines internal organs and glands."
+      },
+      {
+        id: 8,
+        category: "Types of Tissues",
+        question: "Blood, bones, and cartilage belong to which main group of tissues?",
+        options: [
+          "Connective tissue",
+          "Epithelial tissue",
+          "Nervous tissue",
+          "Muscular tissue"
+        ],
+        correct: 0,
+        explanation: "<strong>Connective tissue</strong> supports, protects, and maintains body shape while transporting nutrients (e.g. blood, bone, cartilage)."
+      },
+      {
+        id: 9,
+        category: "Types of Tissues",
+        question: "Which tissue is made of elongated cells that contract and relax to produce movement?",
+        options: [
+          "Nervous tissue",
+          "Muscular tissue",
+          "Epithelial tissue",
+          "Connective tissue"
+        ],
+        correct: 1,
+        explanation: "<strong>Muscular tissue</strong> consists of muscle cells that contract and relax to generate body movement, such as in the biceps and heart."
+      },
+      {
+        id: 10,
+        category: "Types of Tissues",
+        question: "Where in the human body can you find nervous tissue?",
+        options: [
+          "In the stomach and intestines",
+          "In the biceps and heart",
+          "In the brain, spinal cord, and nerves",
+          "In the bones and skin"
+        ],
+        correct: 2,
+        explanation: "<strong>Nervous tissue</strong> is located in the brain, spinal cord, and nerves. It controls and coordinates body activities."
+      },
+      {
+        id: 11,
+        category: "Nutrition Types",
+        question: "Organisms like plants that produce their own nutrients through photosynthesis are called...",
+        options: [
+          "Heterotrophic",
+          "Autotrophic",
+          "Carnivorous",
+          "Prokaryotic"
+        ],
+        correct: 1,
+        explanation: "<em>'Auto'</em> means self and <em>'troph'</em> means food. <strong>Autotrophic organisms</strong> make their own food using sunlight, water, and air."
+      },
+      {
+        id: 12,
+        category: "Nutrition Types",
+        question: "Humans, lions, and butterflies obtain nutrients by feeding on other living organisms. They are...",
+        options: [
+          "Autotrophic",
+          "Unicellular",
+          "Heterotrophic",
+          "Prokaryotic"
+        ],
+        correct: 2,
+        explanation: "<strong>Heterotrophic organisms</strong> cannot make their own food and must feed on other living organisms to survive."
+      },
+      {
+        id: 13,
+        category: "Levels of Organization",
+        question: "What is the correct order of organization in living things, from simplest to most complex?",
+        options: [
+          "Systems → Organs → Tissues → Cells",
+          "Cells → Tissues → Organs → Systems",
+          "Tissues → Cells → Organs → Systems",
+          "Organs → Tissues → Cells → Systems"
+        ],
+        correct: 1,
+        explanation: "The hierarchy of life is: <strong>Cells</strong> group to form <strong>Tissues</strong>; tissues form <strong>Organs</strong>; organs form <strong>Systems</strong>!"
+      },
+      {
+        id: 14,
+        category: "Body Systems",
+        question: "Which body system is responsible for taking in oxygen and eliminating carbon dioxide?",
+        options: [
+          "Digestive system",
+          "Respiratory system",
+          "Circulatory system",
+          "Excretory system"
+        ],
+        correct: 1,
+        explanation: "The <strong>Respiratory system</strong> (lungs, trachea, bronchi) absorbs oxygen into the blood and removes carbon dioxide."
+      },
+      {
+        id: 15,
+        category: "Body Systems",
+        question: "The stomach, small intestine, and large intestine belong to which body system?",
+        options: [
+          "Digestive system",
+          "Nervous system",
+          "Excretory system",
+          "Locomotor system"
+        ],
+        correct: 0,
+        explanation: "The <strong>Digestive system</strong> breaks down food into nutrients that the body can absorb and use for energy."
+      },
+      {
+        id: 16,
+        category: "Plant Organs",
+        question: "Which of the following lists contains main organs of a plant?",
+        options: [
+          "Brain, Heart, and Lungs",
+          "Leaves, Roots, Stem, and Flowers",
+          "Skin, Kidneys, and Stomach",
+          "Bones and Muscles"
+        ],
+        correct: 1,
+        explanation: "<strong>Plant organs</strong> include leaves (photosynthesis), roots (absorbing water & minerals), stem (support & transport), and flowers (reproduction)."
+      },
+      {
+        id: 17,
+        category: "Scientific Discovery",
+        question: "Who was the scientist that observed microscopic 'animalcules' (bacteria and protozoa) for the first time in the 17th century?",
+        options: [
+          "Isaac Newton",
+          "Charles Darwin",
+          "Anton van Leeuwenhoek",
+          "Louis Pasteur"
+        ],
+        correct: 2,
+        explanation: "<strong>Anton van Leeuwenhoek</strong> built microscopes that magnified 300x, allowing him to discover unicellular organisms for the first time in history!"
+      },
+      {
+        id: 18,
+        category: "Organs",
+        question: "What is the largest organ in the human body?",
+        options: [
+          "The Liver",
+          "The Brain",
+          "The Skin",
+          "The Heart"
+        ],
+        correct: 2,
+        explanation: "The <strong>skin</strong> is an external organ that covers our body, protects internal structures, and is the largest organ in human beings!"
+      },
+      {
+        id: 19,
+        category: "Body Systems",
+        question: "Which body system cleans waste products from the blood and eliminates them in urine?",
+        options: [
+          "Excretory system",
+          "Circulatory system",
+          "Locomotor system",
+          "Respiratory system"
+        ],
+        correct: 0,
+        explanation: "The <strong>Excretory system</strong> (kidneys, ureters, bladder) cleans liquid waste products from the body."
+      },
+      {
+        id: 20,
+        category: "Health & Wellbeing",
+        question: "Why is blood donation important for society (SDG 3: Good Health and Well-being)?",
+        options: [
+          "Because blood is used to create food in labs",
+          "Because blood is needed for surgeries, emergency accidents, and treating illnesses",
+          "Because donating blood replaces physical exercise",
+          "Because blood is used to build human bones"
+        ],
+        correct: 1,
+        explanation: "Blood donations save lives! Hospitals need blood for surgeries, emergency accidents, and treating diseases like anemia."
+      }
+    ];
+
+    // -------------------------------------------------------------
+    // GAME STATE VARIABLES
+    // -------------------------------------------------------------
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let streak = 0;
+    let soundEnabled = true;
+    let userAnswers = []; // Store question results for review mode
+
+    // Sound Synthesizer using Web Audio API (Zero external MP3 dependencies)
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new AudioContext();
+      }
+    }
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      initAudio();
+      if (!audioCtx) return;
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'click') {
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      } else if (type === 'correct') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+        osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } else if (type === 'incorrect') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.setValueAtTime(160, now + 0.15);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } else if (type === 'win') {
+        // Simple celebratory melody
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          const noteOsc = audioCtx.createOscillator();
+          const noteGain = audioCtx.createGain();
+          noteOsc.connect(noteGain);
+          noteGain.connect(audioCtx.destination);
+          
+          noteOsc.type = 'triangle';
+          noteOsc.frequency.setValueAtTime(freq, now + idx * 0.12);
+          noteGain.gain.setValueAtTime(0.2, now + idx * 0.12);
+          noteGain.gain.linearRampToValueAtTime(0.01, now + idx * 0.12 + 0.25);
+          
+          noteOsc.start(now + idx * 0.12);
+          noteOsc.stop(now + idx * 0.12 + 0.25);
+        });
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const icon = document.getElementById('soundIcon');
+      if (soundEnabled) {
+        icon.className = 'fa-solid fa-volume-high text-lg';
+      } else {
+        icon.className = 'fa-solid fa-volume-xmark text-lg text-slate-400';
+      }
+    }
+
+    // -------------------------------------------------------------
+    // GAME FLOW FUNCTIONS
+    // -------------------------------------------------------------
+    function startQuiz() {
+      playSound('click');
+      currentQuestionIndex = 0;
+      score = 0;
+      streak = 0;
+      userAnswers = [];
+
+      document.getElementById('startScreen').classList.add('hidden');
+      document.getElementById('resultsScreen').classList.add('hidden');
+      document.getElementById('quizScreen').classList.remove('hidden');
+
+      updateHeaderStats();
+      loadQuestion();
+    }
+
+    function updateHeaderStats() {
+      document.getElementById('scoreHeader').innerText = `${score} pts`;
+      document.getElementById('scoreText').innerText = `Score: ${score} / ${questions.length * 10}`;
+      
+      const streakBadge = document.getElementById('streakBadge');
+      if (streak >= 2) {
+        streakBadge.classList.remove('hidden');
+        streakBadge.classList.add('flex');
+        document.getElementById('streakText').innerText = `Streak: ${streak} 🔥`;
+      } else {
+        streakBadge.classList.add('hidden');
+        streakBadge.classList.remove('flex');
+      }
+    }
+
+    function loadQuestion() {
+      const q = questions[currentQuestionIndex];
+
+      // Update UI elements
+      document.getElementById('questionNumText').innerText = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
+      document.getElementById('categoryBadge').innerText = q.category;
+      document.getElementById('questionText').innerText = q.question;
+
+      // Update Progress Bar
+      const progressPercent = ((currentQuestionIndex + 1) / questions.length) * 100;
+      document.getElementById('progressBar').style.width = `${progressPercent}%`;
+
+      // Reset Feedback and Next Button
+      const feedbackCard = document.getElementById('feedbackCard');
+      feedbackCard.classList.add('hidden');
+
+      const nextBtn = document.getElementById('nextBtn');
+      nextBtn.disabled = true;
+      nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+      // Populate Options
+      const optionsContainer = document.getElementById('optionsContainer');
+      optionsContainer.innerHTML = '';
+
+      q.options.forEach((optText, index) => {
+        const btn = document.createElement('button');
+        btn.className = `option-card w-full text-left p-4 rounded-2xl flex items-center space-x-3 bg-white font-medium text-slate-700 btn-press`;
+        btn.setAttribute('onclick', `selectOption(${index})`);
+        btn.id = `option-${index}`;
+
+        const letterBadge = document.createElement('span');
+        letterBadge.className = `w-8 h-8 rounded-xl bg-slate-100 font-display font-bold text-slate-500 flex items-center justify-center shrink-0 border border-slate-200`;
+        letterBadge.innerText = String.fromCharCode(65 + index); // A, B, C, D
+
+        const optionText = document.createElement('span');
+        optionText.className = `text-base md:text-lg flex-1 leading-snug`;
+        optionText.innerText = optText;
+
+        btn.appendChild(letterBadge);
+        btn.appendChild(optionText);
+        optionsContainer.appendChild(btn);
+      });
+    }
+
+    function selectOption(selectedIndex) {
+      const q = questions[currentQuestionIndex];
+      const options = document.querySelectorAll('.option-card');
+
+      // Disable all option buttons after click
+      options.forEach(opt => {
+        opt.classList.add('disabled');
+        opt.removeAttribute('onclick');
+      });
+
+      const isCorrect = selectedIndex === q.correct;
+
+      // Track answer for review
+      userAnswers.push({
+        question: q.question,
+        options: q.options,
+        correctIndex: q.correct,
+        selectedIndex: selectedIndex,
+        isCorrect: isCorrect,
+        explanation: q.explanation
+      });
+
+      // Show option colors
+      const selectedBtn = document.getElementById(`option-${selectedIndex}`);
+      const correctBtn = document.getElementById(`option-${q.correct}`);
+
+      if (isCorrect) {
+        playSound('correct');
+        selectedBtn.classList.add('correct');
+        score += 10;
+        streak += 1;
+        if (streak >= 3) {
+          score += 2; // Bonus points for streak
+        }
+      } else {
+        playSound('incorrect');
+        selectedBtn.classList.add('incorrect');
+        correctBtn.classList.add('correct');
+        streak = 0;
+      }
+
+      updateHeaderStats();
+      showFeedback(isCorrect, q);
+
+      // Enable Next Button
+      const nextBtn = document.getElementById('nextBtn');
+      nextBtn.disabled = false;
+      nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+      if (currentQuestionIndex === questions.length - 1) {
+        nextBtn.querySelector('span').innerText = 'See Results';
+        nextBtn.querySelector('i').className = 'fa-solid fa-trophy';
+      }
+    }
+
+    function showFeedback(isCorrect, q) {
+      const feedbackCard = document.getElementById('feedbackCard');
+      const iconContainer = document.getElementById('feedbackIconContainer');
+      const icon = document.getElementById('feedbackIcon');
+      const title = document.getElementById('feedbackTitle');
+      const explanation = document.getElementById('feedbackExplanation');
+
+      feedbackCard.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-200', 'bg-rose-50', 'border-rose-200');
+
+      if (isCorrect) {
+        feedbackCard.classList.add('bg-emerald-50', 'border-emerald-200');
+        iconContainer.className = 'w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-xl font-bold text-white bg-emerald-500 shadow-md';
+        icon.className = 'fa-solid fa-check';
+        title.className = 'font-display font-bold text-lg text-emerald-800 mb-1';
+        title.innerText = streak >= 3 ? 'Excellent! 🔥 Keep the streak going!' : 'Correct Answer! Great Job! 🎉';
+      } else {
+        feedbackCard.classList.add('bg-rose-50', 'border-rose-200');
+        iconContainer.className = 'w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-xl font-bold text-white bg-rose-500 shadow-md';
+        icon.className = 'fa-solid fa-xmark';
+        title.className = 'font-display font-bold text-lg text-rose-800 mb-1';
+        title.innerText = 'Not quite right!';
+      }
+
+      explanation.innerHTML = q.explanation;
+    }
+
+    function nextQuestion() {
+      playSound('click');
+      currentQuestionIndex++;
+
+      if (currentQuestionIndex < questions.length) {
+        loadQuestion();
+      } else {
+        showResults();
+      }
+    }
+
+    // -------------------------------------------------------------
+    // RESULTS & REVIEW LOGIC
+    // -------------------------------------------------------------
+    function showResults() {
+      document.getElementById('quizScreen').classList.add('hidden');
+      document.getElementById('resultsScreen').classList.remove('hidden');
+
+      const correctCount = userAnswers.filter(a => a.isCorrect).length;
+      const percentage = Math.round((correctCount / questions.length) * 100);
+
+      document.getElementById('finalScoreText').innerText = `${percentage}%`;
+      document.getElementById('finalCorrectText').innerText = `${correctCount} / ${questions.length}`;
+      document.getElementById('finalPointsText').innerText = `${score} pts`;
+
+      // Set Rank and Stars
+      const rankEmoji = document.getElementById('rankEmoji');
+      const rankTitle = document.getElementById('rankTitle');
+      const rankSubtitle = document.getElementById('rankSubtitle');
+      const rankBg = document.getElementById('rankIconBg');
+      const starContainer = document.getElementById('starContainer');
+
+      let starCount = 1;
+
+      if (percentage >= 90) {
+        rankEmoji.innerText = '🏆';
+        rankTitle.innerText = 'Science Superstar!';
+        rankSubtitle.innerText = 'Outstanding! You have mastered Unit 1: How We Are Formed!';
+        rankBg.className = 'w-24 h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-300 flex items-center justify-center text-white text-5xl shadow-xl mx-auto border-4 border-white';
+        starCount = 5;
+        playSound('win');
+        triggerConfetti();
+      } else if (percentage >= 75) {
+        rankEmoji.innerText = '🌟';
+        rankTitle.innerText = 'Cell Specialist!';
+        rankSubtitle.innerText = 'Great work! You have a solid understanding of cells and body systems!';
+        rankBg.className = 'w-24 h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-tr from-purple-400 to-indigo-500 flex items-center justify-center text-white text-5xl shadow-xl mx-auto border-4 border-white';
+        starCount = 4;
+        playSound('win');
+      } else if (percentage >= 50) {
+        rankEmoji.innerText = '🧬';
+        rankTitle.innerText = 'Junior Scientist!';
+        rankSubtitle.innerText = 'Good effort! Review the topics to strengthen your knowledge.';
+        rankBg.className = 'w-24 h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-tr from-teal-400 to-emerald-500 flex items-center justify-center text-white text-5xl shadow-xl mx-auto border-4 border-white';
+        starCount = 3;
+      } else {
+        rankEmoji.innerText = '📚';
+        rankTitle.innerText = 'Keep Practicing!';
+        rankSubtitle.innerText = 'Don’t give up! Try playing again and review the explanations below.';
+        rankBg.className = 'w-24 h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-tr from-rose-400 to-pink-500 flex items-center justify-center text-white text-5xl shadow-xl mx-auto border-4 border-white';
+        starCount = 2;
+      }
+
+      // Render Stars
+      starContainer.innerHTML = '';
+      for (let i = 0; i < 5; i++) {
+        const star = document.createElement('i');
+        star.className = i < starCount ? 'fa-solid fa-star text-amber-400' : 'fa-regular fa-star text-slate-300';
+        starContainer.appendChild(star);
+      }
+
+      buildReviewList();
+    }
+
+    function triggerConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
+    }
+
+    function toggleReviewMode() {
+      playSound('click');
+      const reviewContainer = document.getElementById('reviewContainer');
+      reviewContainer.classList.toggle('hidden');
+    }
+
+    function buildReviewList() {
+      const reviewList = document.getElementById('reviewList');
+      reviewList.innerHTML = '';
+
+      userAnswers.forEach((ans, idx) => {
+        const item = document.createElement('div');
+        item.className = `p-4 rounded-xl border ${ans.isCorrect ? 'bg-emerald-50/70 border-emerald-200' : 'bg-rose-50/70 border-rose-200'}`;
+
+        item.innerHTML = `
+          <div class="flex items-start space-x-2 mb-2">
+            <span class="font-display font-bold text-sm ${ans.isCorrect ? 'text-emerald-700' : 'text-rose-700'} shrink-0">
+              Q${idx + 1}.
+            </span>
+            <p class="font-bold text-slate-800 text-sm md:text-base leading-snug">
+              ${ans.question}
+            </p>
+          </div>
+          <div class="text-xs md:text-sm space-y-1 mb-2 pl-5">
+            <p class="${ans.isCorrect ? 'text-emerald-800 font-semibold' : 'text-rose-800 line-through'}">
+              Your answer: ${ans.options[ans.selectedIndex]}
+            </p>
+            ${!ans.isCorrect ? `<p class="text-emerald-800 font-semibold">Correct answer: ${ans.options[ans.correctIndex]}</p>` : ''}
+          </div>
+          <div class="pl-5 text-xs text-slate-600 bg-white/60 p-2.5 rounded-lg border border-slate-200/60">
+            ${ans.explanation}
+          </div>
+        `;
+
+        reviewList.appendChild(item);
+      });
+    }
+
+    function resetQuiz() {
+      playSound('click');
+      document.getElementById('resultsScreen').classList.add('hidden');
+      document.getElementById('reviewContainer').classList.add('hidden');
+      document.getElementById('startScreen').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
